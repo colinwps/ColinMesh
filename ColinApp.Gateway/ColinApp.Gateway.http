@@ -1,0 +1,6 @@
+@ColinApp.Gateway_HostAddress = http://localhost:5262
+
+GET {{ColinApp.Gateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
