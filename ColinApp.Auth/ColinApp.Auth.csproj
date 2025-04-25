@@ -12,14 +12,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.15" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
+    <Folder Include="Entities\" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ColinApp.Common\ColinApp.Common.csproj" />
     <ProjectReference Include="..\ColinApp.Entities\ColinApp.Entities.csproj" />
   </ItemGroup>
 

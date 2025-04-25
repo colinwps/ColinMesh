@@ -12,14 +12,10 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
-// 读取 JWT 配置
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtOptions = jwtSection.Get<JwtOptions>();
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
 
-builder.Services.Configure<JwtOptions>(jwtSection);
-
-// JWT 验证配置
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -35,8 +31,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
-
 
 // Add services to the container.
 
@@ -45,8 +39,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+// 配置 Kestrel 服务器的端口
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8802);
+});
 
 builder.Services.Configure<ConsulConfig>(builder.Configuration.GetSection("ConsulConfig"));
 builder.Services.AddSingleton<IConsulClient, ConsulClient>(p =>
@@ -55,16 +52,14 @@ builder.Services.AddSingleton<IConsulClient, ConsulClient>(p =>
     return new ConsulClient(cfg => { cfg.Address = new Uri(config.Address); });
 });
 
-// 配置 Kestrel 服务器的端口
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(8801);
-});
-
-
-
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 var consulClient = app.Services.GetRequiredService<IConsulClient>();
 var consulConfig = app.Configuration.GetSection("ConsulConfig").Get<ConsulConfig>();
@@ -75,7 +70,7 @@ var registration = new AgentServiceRegistration()
     Name = consulConfig.ServiceName,
     Address = consulConfig.ServiceAddress,
     Port = consulConfig.ServicePort.Value,
-    Tags = new[] { "gateway" },
+    Tags = new[] { "auth" },
     Check = new AgentServiceCheck()
     {
         HTTP = $"http://{consulConfig.ServiceAddress}:{consulConfig.ServicePort}/health",
@@ -89,21 +84,12 @@ var registration = new AgentServiceRegistration()
 await consulClient.Agent.ServiceRegister(registration);
 
 // 添加健康检查端点
-app.MapGet("/health", () => Results.Ok("Gateway is healthy"));
+app.MapGet("/health", () => Results.Ok("guth is healthy"));
 
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-
-app.MapReverseProxy(); // 自动转发
 
 app.MapControllers();
 
