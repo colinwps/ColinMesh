@@ -3,5 +3,7 @@
     public interface IAuthServices
     {
 
+        Task<string> GetCaptcha();
+
     }
 }

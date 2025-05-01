@@ -29,7 +29,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColinApp.Entities", "ColinA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Auth Service", "Auth Service", "{47156405-B2B6-457D-A1B4-D4DE0FE1E33E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColinApp.Auth", "ColinApp.Auth\ColinApp.Auth.csproj", "{1316FD73-7678-4346-BEFF-36B50D979BBD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColinApp.Auth", "ColinApp.Auth\ColinApp.Auth.csproj", "{1316FD73-7678-4346-BEFF-36B50D979BBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
