@@ -99,4 +99,6 @@ dotnet run --project ColinMesh.Gateway
 
 ## 📄 License
 
-MIT License - see the [LICENSE](LICENSE) file for details.
+## 📢 许可协议
+
+本项目采用 [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) 协议，仅限于**个人学习和研究用途**，禁止任何形式的商业用途。如需商用，请联系作者获取授权。
