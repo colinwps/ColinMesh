@@ -61,10 +61,24 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(8801);
 });
 
+// 添加 CORS 服务
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()    // 允许任意来源
+              .AllowAnyMethod()    // 允许任意方法
+              .AllowAnyHeader();   // 允许任意请求头
+    });
+});
+
 
 
 var app = builder.Build();
 
+
+// 使用 CORS 策略
+app.UseCors("AllowAll");
 
 var consulClient = app.Services.GetRequiredService<IConsulClient>();
 var consulConfig = app.Configuration.GetSection("ConsulConfig").Get<ConsulConfig>();

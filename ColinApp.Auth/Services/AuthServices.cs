@@ -95,14 +95,20 @@ namespace ColinApp.Auth.Services
         {
             try
             {
-                string p = PasswordHelper.HashPassword(loginRequest.Password);
+                //是否开启验证码
+                bool isCaptchaEnabled = false; // TODO: 从配置文件中读取
 
-                // 1. 验证验证码
-                var isValid = await Verify(loginRequest.CaptchaId, loginRequest.CaptchaCode);
-                if (!isValid)
+                if (isCaptchaEnabled)
                 {
-                    return ApiResponse<LoginResponse>.Fail("验证码错误");
+                    // 1. 验证验证码
+                    var isValid = await Verify(loginRequest.CaptchaId, loginRequest.CaptchaCode);
+                    if (!isValid)
+                    {
+                        return ApiResponse<LoginResponse>.Fail("验证码错误");
+                    }
                 }
+
+                
 
                 var loginUser = await _uow.Repository<User>().FindSingleByConditionAsync(x => x.UserLoginName == loginRequest.UserName);
 
