@@ -6,16 +6,24 @@ using System.Threading.Tasks;
 
 namespace ColinApp.Common.BaseController
 {
-    public class ApiResponse
+    public class ApiResponse<T>
     {
-        public int Code { get; set; }          // 0：成功，其它为错误码
-        public string Msg { get; set; } = "";  // 提示信息
-        public object? Data { get; set; }      // 返回数据（可以是任意类型）
+        public ApiResponse(int code, string msg, T data)
+        {
+            Code = code;
+            Msg = msg;
+            Data = data;
+        }
 
-        public static ApiResponse Success(object? data = null, string msg = "成功") =>
-            new ApiResponse { Code = 0, Msg = msg, Data = data };
+        public int Code { get; set; }
+        public string Msg { get; set; }
+        public T Data { get; set; }
 
-        public static ApiResponse Fail(string msg = "操作失败", int code = -1) =>
-            new ApiResponse { Code = code, Msg = msg };
+        // 成功响应
+        public static ApiResponse<T> Success(T data) => new ApiResponse<T>(200, "OK", data);
+
+        // 失败响应
+        public static ApiResponse<T> Fail(string msg = "fail") => new ApiResponse<T>(500, msg, default);
+
     }
 }

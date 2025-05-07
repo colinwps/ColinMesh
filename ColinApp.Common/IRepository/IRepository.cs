@@ -1,23 +1,23 @@
-﻿using System;
+﻿using ColinApp.Common.Page;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ColinApp.Common.Repository
+namespace ColinApp.Common.IRepository
 {
-    public  interface IRepository<T> where T : class
+    public interface IRepository<T> where T : class
     {
-        Task<T?> GetByIdAsync(object id);
+        Task<List<T>> FindByConditionAsync(Expression<Func<T, bool>> predicate);
+        Task<T?> FindSingleByConditionAsync(Expression<Func<T, bool>> predicate);
+        Task<T?> GetByIdAsync(string id);
+        Task<PagedResult<T>> GetPagedAsync(int pageIndex, int pageSize);
         Task<IEnumerable<T>> GetAllAsync();
-        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
-
         Task AddAsync(T entity);
-        Task AddRangeAsync(IEnumerable<T> entities);
-
         void Update(T entity);
-        void Remove(T entity);
-        void RemoveRange(IEnumerable<T> entities);
+        void SoftDelete(T entity);
+        Task SaveChangesAsync();
     }
 }

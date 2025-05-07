@@ -1,7 +1,16 @@
+using ColinApp.Auth.DBContext;
+using ColinApp.Auth.Iservices;
 using ColinApp.Auth.Middleware;
+using ColinApp.Auth.Repository;
+using ColinApp.Auth.Services;
+using ColinApp.Auth.UnitOfWork;
+using ColinApp.Common.Cache;
+using ColinApp.Common.IRepository;
+using ColinApp.Common.IUnitOfWork;
 using ColinApp.Entities.Config;
 using Consul;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -39,6 +48,17 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+builder.Services.AddDbContext<AuthDBContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddSingleton(new RedisService(builder.Configuration["RedisConnectionString"].ToString()));
+
+builder.Services.AddSingleton<JwtService>();
+
+builder.Services.AddScoped<IAuthServices, AuthServices>();
 
 // 配置 Kestrel 服务器的端口
 builder.WebHost.ConfigureKestrel(options =>

@@ -1,9 +1,15 @@
-﻿using ColinApp.Common.Repository;
+﻿using ColinApp.Auth.Entities.Base;
+using ColinApp.Common.IRepository;
+using ColinApp.Common.Page;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace ColinApp.Auth.Repository
 {
+    /// <summary>
+    /// 数据仓库实现
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class Repository<T> : IRepository<T> where T : class
     {
         protected readonly DbContext _context;
@@ -15,44 +21,38 @@ namespace ColinApp.Auth.Repository
             _dbSet = context.Set<T>();
         }
 
-        public async Task<T?> GetByIdAsync(object id)
+        public async Task<T?> GetByIdAsync(string id) => await _dbSet.FindAsync(id);
+
+        public async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.ToListAsync();
+
+        public async Task<PagedResult<T>> GetPagedAsync(int pageIndex, int pageSize)
         {
-            return await _dbSet.FindAsync(id);
+            var query = _dbSet.AsQueryable();
+            var total = await query.CountAsync();
+            var items = await query.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new PagedResult<T> { Items = items, TotalCount = total };
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await _dbSet.ToListAsync();
-        }
+        public async Task AddAsync(T entity) => await _dbSet.AddAsync(entity);
 
-        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _dbSet.Where(predicate).ToListAsync();
-        }
+        public void Update(T entity) => _dbSet.Update(entity);
 
-        public async Task AddAsync(T entity)
-        {
-            await _dbSet.AddAsync(entity);
-        }
-
-        public async Task AddRangeAsync(IEnumerable<T> entities)
-        {
-            await _dbSet.AddRangeAsync(entities);
-        }
-
-        public void Update(T entity)
+        public void SoftDelete(T entity)
         {
             _dbSet.Update(entity);
         }
 
-        public void Remove(T entity)
+        public async Task<List<T>> FindByConditionAsync(Expression<Func<T, bool>> predicate)
         {
-            _dbSet.Remove(entity);
+            return await _dbSet.Where(predicate).ToListAsync();
         }
 
-        public void RemoveRange(IEnumerable<T> entities)
+        public async Task<T?> FindSingleByConditionAsync(Expression<Func<T, bool>> predicate)
         {
-            _dbSet.RemoveRange(entities);
+            return await _dbSet.FirstOrDefaultAsync(predicate);
         }
+
+        public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }

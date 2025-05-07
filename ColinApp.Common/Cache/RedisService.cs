@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace ColinApp.Common.Cache
 {
-    public class RedisHelper
+    public class RedisService
     {
         private readonly IDatabase _db;
         private readonly IConnectionMultiplexer _conn;
 
-        public RedisHelper(IConnectionMultiplexer connection)
+        public RedisService(string connectionString)
         {
-            _conn = connection;
+            _conn = ConnectionMultiplexer.Connect(connectionString);
             _db = _conn.GetDatabase();
         }
 

@@ -1,17 +1,26 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ColinApp.Auth.Entities.Base;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ColinApp.Auth.Entities.System
+namespace ColinApp.Auth.Models.System
 {
+    /// <summary>
+    /// 用户实体类
+    /// </summary>
     [Table("users")]
-    public class User
+    public class User : BaseEntity
     {
         [Key]
         [Column("Id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Comment("主键ID")]
         public long Id { get; set; }
+
+        [Column("Guid")]
+        [StringLength(255)]
+        [Comment("唯一编号")]
+        public string Guid {  get; set; }
 
         [Required]
         [Column("UserId")]
@@ -57,32 +66,6 @@ namespace ColinApp.Auth.Entities.System
         [Comment("是否已删除：0=否，1=是")]
         public byte? IsDeleted { get; set; } = 0;
 
-        [Column("CreatedId")]
-        [StringLength(255)]
-        [Comment("创建人编号")]
-        public string? CreatedId { get; set; }
-
-        [Column("CreatedName")]
-        [StringLength(255)]
-        [Comment("创建人姓名")]
-        public string? CreatedName { get; set; }
-
-        [Column("CreatedAt")]
-        [Comment("创建时间")]
-        public DateTime? CreatedAt { get; set; } = DateTime.Now;
-
-        [Column("UpdatedId")]
-        [StringLength(255)]
-        [Comment("修改人编号")]
-        public string? UpdatedId { get; set; }
-
-        [Column("UpdatedName")]
-        [StringLength(255)]
-        [Comment("修改人姓名")]
-        public string? UpdatedName { get; set; }
-
-        [Column("UpdatedAt")]
-        [Comment("更新时间")]
-        public DateTime? UpdatedAt { get; set; } = DateTime.Now;
+        
     }
 }

@@ -1,5 +1,6 @@
 ﻿using ColinApp.Auth.Base;
-using Microsoft.AspNetCore.Identity.Data;
+using ColinApp.Auth.Entities.Common;
+using ColinApp.Auth.Iservices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ColinApp.Auth.Controllers
@@ -8,18 +9,31 @@ namespace ColinApp.Auth.Controllers
     [Route("api/[controller]")]
     public class AccountController : BaseApiController
     {
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync([FromBody] LoginRequest req)
+        private readonly ILogger<AccountController> _logger;
+
+        private readonly IAuthServices _authServices;
+
+        public AccountController(ILogger<AccountController> logger, IAuthServices authServices)
         {
-            await Task.Delay(100);
+            _logger = logger;
+            _authServices = authServices;
+        }
 
-            if (req.Username == "admin" && req.Password == "123456")
-            {
-                var token = "fake-jwt-token";
-                return await OkResponseAsync(new { token }, "登录成功");
-            }
+        [HttpGet]
+        [Route("captcha")]
+        public async Task<IActionResult> GetCaptchaAsync()
+        {
+            var result = await _authServices.GetCaptcha();
+            return Ok(result);
+        }
 
-            return await FailResponseAsync("用户名或密码错误");
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsync([FromBody] LoginRequest loginRequest)
+        {
+            var result = await _authServices.Login(loginRequest);
+
+            return Ok(result);
         }
     }
 }

@@ -1,8 +1,10 @@
-﻿using ColinApp.Entities.Config;
+﻿using ColinApp.Auth.Models.System;
+using ColinApp.Entities.Config;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ColinApp.Auth.Services
@@ -35,6 +37,15 @@ namespace ColinApp.Auth.Services
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public RefreshToken GenerateRefreshToken()
+        {
+            return new RefreshToken
+            {
+                Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
         }
     }
 }
