@@ -16,10 +16,10 @@ ColinMesh 是一个使用 **ASP.NET 8.0** 构建的微服务架构后端项目�
 
 ```
 ColinMesh/
-├── ColinMesh.Gateway       # 网关服务
-├── ColinMesh.Auth          # 认证服务
-├── ColinMesh.Api           # Web API 服务
-├── ColinMesh.Shared        # 通用库与接口定义
+├── ColinApp.Gateway       # 网关服务
+├── ColinApp.Auth          # 认证服务
+├── ColinApp.Api           # Web API 服务
+├── ColinApp.Shared        # 通用库与接口定义
 └── README.md               # 项目说明文档
 ```
 
@@ -60,10 +60,10 @@ dotnet run --project ColinMesh.Gateway
 
 ```
 ColinMesh/
-├── ColinMesh.Gateway       # Gateway Service
-├── ColinMesh.Auth          # Auth Service
-├── ColinMesh.Api           # Web API Service
-├── ColinMesh.Shared        # Shared Libraries and Interfaces
+├── ColinApp.Gateway       # Gateway Service
+├── ColinApp.Auth          # Auth Service
+├── ColinApp.Api           # Web API Service
+├── ColinApp.Shared        # Shared Libraries and Interfaces
 └── README.md               # Project Description
 ```
 
