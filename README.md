@@ -9,7 +9,7 @@
 ColinMesh 是一个使用 **ASP.NET 8.0** 构建的微服务架构后端项目，采用模块化设计，包含以下核心模块：
 
 - 🔀 **网关模块（Gateway）**：负责统一入口、服务路由与负载均衡，支持 Ocelot/YARP。
-- 🔐 **认证模块（Auth）**：基于 JWT 或 OAuth2，实现用户认证、授权和 Token 管理。
+- 🔐 **认证模块（Auth）**：基于 JWT，实现用户认证、授权和 Token 管理。
 - 📦 **WebAPI 模块（Api）**：提供业务功能 API，采用 RESTful 设计，支持版本控制和 Swagger 文档。
 
 ### 📁 项目结构
@@ -28,7 +28,7 @@ ColinMesh/
 1. 克隆项目
 
 ```bash
-git clone https://github.com/your-org/ColinMesh.git
+git clone https://github.com/colinwps/ColinMesh.git
 cd ColinMesh
 ```
 
@@ -72,7 +72,7 @@ ColinMesh/
 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/ColinMesh.git
+git clone https://github.com/colinwps/ColinMesh.git
 cd ColinMesh
 ```
 
