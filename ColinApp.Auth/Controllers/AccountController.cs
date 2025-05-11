@@ -28,7 +28,8 @@ namespace ColinApp.Auth.Controllers
         }
 
 
-        [HttpPost("login")]
+        [HttpPost]
+        [Route("login")]
         public async Task<IActionResult> LoginAsync([FromBody] LoginRequest loginRequest)
         {
             var result = await _authServices.Login(loginRequest);

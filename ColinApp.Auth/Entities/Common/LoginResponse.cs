@@ -26,5 +26,20 @@
         /// 用户Id（可选）
         /// </summary>
         public string? UserId { get; set; }
+
+        /// <summary>
+        /// 用户角色
+        /// </summary>
+        public string? UserRole { get; set; }
+
+        /// <summary>
+        /// 角色名称
+        /// </summary>
+        public string? UserRoleName { get; set; }
+
+        /// <summary>
+        /// 用户头像
+        /// </summary>
+        public string? UserAvatar { get; set; }
     }
 }

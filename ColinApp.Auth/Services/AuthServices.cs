@@ -96,7 +96,7 @@ namespace ColinApp.Auth.Services
             try
             {
                 //是否开启验证码
-                bool isCaptchaEnabled = false; // TODO: 从配置文件中读取
+                bool isCaptchaEnabled = true; // TODO: 从配置文件中读取
 
                 if (isCaptchaEnabled)
                 {
