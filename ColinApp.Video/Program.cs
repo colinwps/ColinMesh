@@ -18,7 +18,13 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<GB28181Config>(builder.Configuration.GetSection("GB28181"));
 
-builder.Services.AddHostedService<SipServerService>();
+//builder.Services.AddHostedService<SipServerService>();
+//builder.Services.AddSingleton<SipServerService>();
+
+builder.Services.AddSingleton<SipServerService>();       // 可被注入
+builder.Services.AddHostedService(provider => provider.GetRequiredService<SipServerService>()); // 用作后台服务
+
+
 
 var app = builder.Build();
 
