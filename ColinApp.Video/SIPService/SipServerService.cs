@@ -40,44 +40,67 @@ namespace ColinApp.Video.SIPService
         {
             Console.WriteLine($"[SIP] 收到 {sipRequest.Method} 请求");
 
-            switch (sipRequest.Method)
+            try
             {
-                case SIPMethodsEnum.REGISTER:
-                    var deviceId = sipRequest.Header.From.FromURI.User;
-                    Console.WriteLine($"[REGISTER] 设备ID: {deviceId}");
+                switch (sipRequest.Method)
+                {
+                    case SIPMethodsEnum.REGISTER:
+                        var deviceId = sipRequest.Header.From.FromURI.User;
+                        Console.WriteLine($"[REGISTER] 设备ID: {deviceId}");
+                        _registeredDevices[deviceId] = remoteEndPoint;
+                        var registerResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
+                        _sipTransport.SendResponseAsync(registerResp);
+                        break;
 
-                    _registeredDevices[deviceId] = remoteEndPoint;
+                    case SIPMethodsEnum.MESSAGE:
+                        string xml = sipRequest.Body;
+                        Console.WriteLine($"[MESSAGE XML]:\n{xml}");
+                        if (xml.Contains("<CmdType>Catalog</CmdType>"))
+                        {
+                            HandleCatalogRequest(sipRequest, remoteEndPoint);
+                        }
+                        else if (xml.Contains("<CmdType>Keepalive</CmdType>"))
+                        {
+                            Console.WriteLine("[Keepalive] 心跳包已收到。");
+                            _sipTransport.SendResponseAsync(SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null));
+                        }
+                        else
+                        {
+                            _sipTransport.SendResponseAsync(SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null));
+                        }
+                        break;
 
-                    var registerResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
-                    _sipTransport.SendResponseAsync(registerResp);
-                    break;
+                    case SIPMethodsEnum.INVITE:
+                        var inviteResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
+                        inviteResp.Body = $@"v=0
+o=- 0 0 IN IP4 {_config.MediaServerIP}
+s=Play
+c=IN IP4 {_config.MediaServerIP}
+t=0 0
+m=video 10000 RTP/AVP 96
+a=rtpmap:96 PS/90000
+a=recvonly";
+                        inviteResp.Header.ContentType = "application/sdp";
+                        inviteResp.Header.ContentLength = inviteResp.Body.Length;
+                        _sipTransport.SendResponseAsync(inviteResp);
+                        Console.WriteLine("[INVITE] 回复设备 INVITE 请求");
+                        break;
 
-                case SIPMethodsEnum.MESSAGE:
-                    string xml = sipRequest.Body;
-                    Console.WriteLine($"[MESSAGE XML]:\n{xml}");
+                    case SIPMethodsEnum.ACK:
+                        Console.WriteLine("[ACK] 收到设备确认，推流会话建立");
+                        // 可选：解析INVITE响应的SDP（需缓存），确认摄像头推流端口
+                        break;
 
-                    if (xml.Contains("<CmdType>Catalog</CmdType>"))
-                    {
-                        HandleCatalogRequest(sipRequest, remoteEndPoint);
-                    }
-                    else if (xml.Contains("<CmdType>Keepalive</CmdType>"))
-                    {
-                        Console.WriteLine("[Keepalive] 心跳包已收到。");
-                        _sipTransport.SendResponseAsync(SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null));
-                    }
-                    else
-                    {
-                        _sipTransport.SendResponseAsync(SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null));
-                    }
-                    break;
-
-                case SIPMethodsEnum.INVITE:
-                    var inviteResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
-                    inviteResp.Body = "v=0\no=- 0 0 IN IP4 127.0.0.1\ns=Play\nc=IN IP4 192.168.1.106\nt=0 0\nm=video 30000 RTP/AVP 96\na=rtpmap:96 PS/90000";
-                    inviteResp.Header.ContentType = "application/sdp";
-                    inviteResp.Header.ContentLength = inviteResp.Body.Length;
-                    _sipTransport.SendResponseAsync(inviteResp);
-                    break;
+                    default:
+                        Console.WriteLine($"[SIP] 未处理的方法: {sipRequest.Method}");
+                        _sipTransport.SendResponseAsync(SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.MethodNotAllowed, null));
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SIP] 处理请求失败: {ex.Message}");
+                _sipTransport.SendResponseAsync(SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.InternalServerError, null));
             }
 
             return Task.CompletedTask;
@@ -131,49 +154,51 @@ namespace ColinApp.Video.SIPService
                 return false;
             }
 
-            var localSIPURI = SIPURI.ParseSIPURI($"sip:{_config.ServerId}@{_config.ServerIP}");
-            var remoteSIPURI = SIPURI.ParseSIPURI($"sip:{deviceId}@{deviceEndpoint.Address}:{deviceEndpoint.Port}");
-
-            var inviteReq = SIPRequest.GetRequest(SIPMethodsEnum.INVITE, remoteSIPURI);
-            inviteReq.Header.From = new SIPFromHeader(null, localSIPURI, null);
-            inviteReq.Header.To = new SIPToHeader(null, remoteSIPURI, null);
-            inviteReq.Header.CSeq = 1;
-            inviteReq.Header.CallId = CallProperties.CreateNewCallId();
-            inviteReq.Header.Contact = new List<SIPContactHeader>
+            try
             {
-                new SIPContactHeader(null, localSIPURI)
-            };
-            inviteReq.Header.Subject = $"{deviceId}:{_config.ServerId}:0:0:0:1";
+                // ZLMediaKit媒体服务器配置
+                var mediaServerIP = _config.MediaServerIP; // 例如 "192.168.1.106"
+                var mediaServerPort = 30000; // 确保在ZLMediaKit的RTP端口范围内（检查config.ini中的[rtp]配置）
 
-            inviteReq.Body = "v=0\no=- 0 0 IN IP4 " + _config.MediaServerIP + "\ns=Play\nc=IN IP4 " + _config.MediaServerIP + "\nt=0 0\nm=video 9000 RTP/AVP 96\na=rtpmap:96 PS/90000";
-            inviteReq.Header.ContentType = "application/sdp";
-            inviteReq.Header.ContentLength = inviteReq.Body.Length;
+                // 构造SDP，指定ZLMediaKit接收流的IP和端口
+                string sdp = $@"v=0
+o=- 0 0 IN IP4 {mediaServerIP}
+s=Play
+c=IN IP4 {mediaServerIP}
+t=0 0
+m=video {mediaServerPort} RTP/AVP 96
+a=rtpmap:96 PS/90000
+a=sendonly";
 
+                // 设备SIP URI
+                var deviceSIP = SIPURI.ParseSIPURI($"sip:{deviceId}@{deviceEndpoint.Address}:{deviceEndpoint.Port}");
+                var localSIPURI = SIPURI.ParseSIPURI($"sip:{_config.ServerId}@{_config.ServerIP}");
 
-            //新
-            // 设备SIP信息
-            var deviceSIP = SIPURI.ParseSIPURI("sip:34020000001320000001@192.168.1.120:5060");
+                // 创建INVITE请求
+                var inviteRequest = SIPRequest.GetRequest(SIPMethodsEnum.INVITE, deviceSIP);
+                inviteRequest.Header.From = new SIPFromHeader(null, localSIPURI, null);
+                inviteRequest.Header.To = new SIPToHeader(null, deviceSIP, null);
+                inviteRequest.Header.CSeq = 1;
+                inviteRequest.Header.CallId = CallProperties.CreateNewCallId();
+                inviteRequest.Header.Contact = new List<SIPContactHeader>
+        {
+            new SIPContactHeader(null, localSIPURI)
+        };
+                inviteRequest.Header.Subject = $"{deviceId}:0"; // GB28181格式，调整为ZLMediaKit需要的流ID
+                inviteRequest.Body = sdp;
+                inviteRequest.Header.ContentType = "application/sdp";
+                inviteRequest.Header.ContentLength = sdp.Length;
 
-            // 生成 sdp
-            string sdp = @"v=0
-                  o=- 0 0 IN IP4 192.168.1.106
-                  s=Play
-                  c=IN IP4 192.168.1.106
-                 t=0 0
-                 m=video 9000 RTP/AVP 96
-                 a=rtpmap:96 PS/90000";
-
-            var inviteRequest = SIPRequest.GetRequest(SIPMethodsEnum.INVITE, deviceSIP);
-            inviteRequest.Body = sdp;
-            inviteRequest.Header.ContentType = "application/sdp";
-            inviteRequest.Header.CSeq = 1;
-            await _sipTransport.SendRequestAsync(inviteRequest);
-            //新
-
-
-            //await _sipTransport.SendRequestAsync(deviceEndpoint, inviteReq);
-            Console.WriteLine($"[INVITE] 已向设备 {deviceId} 发出预览请求");
-            return true;
+                // 发送INVITE请求
+                await _sipTransport.SendRequestAsync(deviceEndpoint, inviteRequest);
+                Console.WriteLine($"[INVITE] 已向设备 {deviceId} 发送推流请求，目标 {mediaServerIP}:{mediaServerPort}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[INVITE] 发送推流请求失败: {ex.Message}");
+                return false;
+            }
         }
 
         public override void Dispose()
